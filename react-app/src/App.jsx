@@ -1,11 +1,15 @@
-import {useState, useRef} from "react"
+import {useState} from "react"
 
 import Header from "./components/Header"
 import Item from "./components/Item"
+import Form from "./components/Form"
 import { Container } from "@mui/material";
+import { useApp } from "./AppProvider";
+import AppDrawer from "./components/AppDrawer";
+import { Outlet } from "react-router";
 
 export default function App() {
-	const inputRef = useRef();
+	const { showForm } = useApp();
 
 	const [posts, setPosts] = useState([
 		{id: 3, content: "More Content", user: "Zaw"},
@@ -25,19 +29,9 @@ export default function App() {
 	return (
 		<div>
 			<Header />
+			<AppDrawer />
 			<Container sx={{ mt:4}} maxWidth="md" >
-				<form style={{ marginBottom: 20, display: "flex"}} onSubmit={ e => {
-					e.preventDefault();
-
-					const content = inputRef.current.value;
-					content && add(content);
-					// add(content);
-
-					e.currentTarget.reset();
-				}}>
-					<input type="text" style={{ flexGrow: 1}} ref={inputRef} />
-					<button>Add</button>
-				</form>
+				{/* {showForm && <Form add={add}/>}
 
 				{posts.map(post => (
 					<Item 
@@ -45,7 +39,8 @@ export default function App() {
 						post={post}
 						remove={remove}
 					/>
-				))}
+				))} */}
+				<Outlet />
 			</Container>
 		</div>
 	)
