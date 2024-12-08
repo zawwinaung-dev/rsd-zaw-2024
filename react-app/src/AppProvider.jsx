@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useMemo } from "react";
 // import App from "./App";
 import AppRouter from "./AppRouter";
+import { QueryClientProvider, QueryClient } from "react-query";
 
 import {
     createTheme,
@@ -9,6 +10,8 @@ import {
 } from '@mui/material'
 
 const AppContext = createContext();
+const queryClient = new QueryClient();
+
 export function useApp() {
     return useContext(AppContext);
 }
@@ -27,13 +30,24 @@ export default function AppProvider() {
         });
     }, [mode]);
     return (
-        <AppContext.Provider value={{ showForm, setShowForm, mode, setMode, showDrawer, setShowDrawer,
-            auth, setAuth
-         }}>
-            <ThemeProvider theme={theme}>
-                <AppRouter />
-                <CssBaseline />
-            </ThemeProvider>
-        </AppContext.Provider>
-    )
+      <AppContext.Provider
+        value={{
+          showForm,
+          setShowForm,
+          mode,
+          setMode,
+          showDrawer,
+          setShowDrawer,
+          auth,
+          setAuth,
+        }}
+      >
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider theme={theme}>
+            <AppRouter />
+            <CssBaseline />
+          </ThemeProvider>
+        </QueryClientProvider>
+      </AppContext.Provider>
+    );
 }

@@ -3,6 +3,9 @@
 const express = require("express");
 const app = express();
 
+const cors = require("cors");
+app.use(cors());
+
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
@@ -12,17 +15,21 @@ app.use(bodyParser.json())
 
 app.get('/posts', async (req, res) => {
     const posts = await prisma.post.findMany({
+        include: { user: true},
         take: 20,
         orderBy: { id: 'desc'},
     });
 
-    res.json(posts);
+    setTimeout(() => {
+        res.json(posts);
+    }, 2000);
 });
 
 app.get('/posts/:id', async (req, res) => {
     const { id } = req.params;
     const post = await prisma.post.findUnique({
         where: { id: Number(id)},
+        include: { user: true},
     })
     res.json(post);
 });
@@ -37,7 +44,8 @@ app.post('/posts', async ( req, res) => {
         data: {
             content,
             userId: 1,
-        }
+        },
+        include: { user: true},
     });
 
     res.status(201).json(post);
