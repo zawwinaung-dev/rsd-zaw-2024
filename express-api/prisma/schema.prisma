@@ -15,6 +15,7 @@ model User {
   name  String
   username String @unique
   bio String?
+  password String
   posts Post[]
   created DateTime @default(now())
 }
