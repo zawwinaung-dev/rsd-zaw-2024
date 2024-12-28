@@ -4,6 +4,7 @@ import { View, TextInput, Button, StyleSheet } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { useMutation, useQueryClient } from "react-query";
 import type { ItemType } from "@/types/ItemType";
+import { useTheme } from "@react-navigation/native";
 
 const styles = StyleSheet.create({
   container: {
@@ -44,10 +45,11 @@ const postContent = async (content: string) => {
 }
 
 export default function Add() {
-  const { control, handleSubmit} = useForm();
+  const { control, handleSubmit, formState: { errors },} = useForm<{content: string }>();
   const queryClient = useQueryClient();
+  const { colors } = useTheme();
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: {content: string}) => {
     add.mutate(data.content);
     router.push("../");
   }
@@ -69,9 +71,18 @@ export default function Add() {
     <View style={styles.container}>
       <Controller
         control={control}
+        rules={{
+          required: true,
+        }}
         render={({ field: { onChange, onBlur, value }}) => (
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              { color: colors.text, borderColor: colors.border},
+              errors.content && {
+                borderColor: "red",
+              }
+            ]}
             onBlur={onBlur}
             onChangeText={onChange}
             value={value}

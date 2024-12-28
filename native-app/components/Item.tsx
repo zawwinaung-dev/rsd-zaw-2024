@@ -1,8 +1,11 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
 
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useMutation, useQueryClient } from "react-query";
 import type { ItemType } from "@/types/ItemType";
+import {formatDistance } from "date-fns"
+import Text from "./Text";
+import { useTheme } from "@react-navigation/native";
 
 const styles = StyleSheet.create({
   card: {
@@ -48,6 +51,8 @@ async function deleteItem(id: number) {
 export default function Item({ item }: { item: ItemType }) {
   const queryClient = useQueryClient();
 
+  const { colors } = useTheme();
+
   const remove = useMutation(deleteItem, {
     onMutate: async (id) => {
       await queryClient.cancelQueries("posts");
@@ -58,12 +63,14 @@ export default function Item({ item }: { item: ItemType }) {
   });
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { borderColor: colors.border }]}>
       <View style={styles.cardHeader}>
         <View style={styles.author}>
           <Ionicons name="person-circle" size={32} color="#F72C5B" />
           <Text style={styles.authorName}>{item.user.name}</Text>
-          <Text style={styles.time}>4h</Text>
+          <Text style={styles.time}>
+            {formatDistance(new Date(), item.created)}
+          </Text>
         </View>
         <TouchableOpacity
           onPress={() => {
