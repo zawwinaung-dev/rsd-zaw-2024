@@ -13,8 +13,12 @@ async function fetchPosts() {
 }
 
 async function deletePost(id) {
+    const token = localStorage.getItem("token");
     const res = await fetch(`${api}/${id}`, {
         method: 'Delete',
+        headers: {
+            Authorization: `Bearer ${token}`,
+        }
     });
 
     return res.json();
@@ -25,7 +29,7 @@ async function deletePost(id) {
 export default function Home() {
     const { data, error, isLoading } = useQuery("posts", fetchPosts);
     const queryClient = useQueryClient();
-    const { showForm } = useApp();
+    const { auth, showForm } = useApp();
 
     const remove = useMutation(deletePost, {
         onMutate: id => {
@@ -47,7 +51,7 @@ export default function Home() {
 
     return (
         <>
-            { showForm && <Form /> }
+            { auth && showForm && <Form /> }
 
             {data.map(post => {
                 return (

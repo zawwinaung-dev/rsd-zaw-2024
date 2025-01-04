@@ -7,6 +7,7 @@ import {
     ListItemIcon,
     ListItemText,
     Divider,
+    Avatar
 } from '@mui/material';
 import {
     Home as HomeIcon,
@@ -16,7 +17,7 @@ import {
     Logout as LogoutIcon,
 } from '@mui/icons-material'
 import { useApp } from '../AppProvider';
-import { grey } from '@mui/material/colors';
+import { grey, green } from '@mui/material/colors';
 import { useNavigate } from 'react-router';
 
 export default function AppDrawer() {
@@ -29,7 +30,26 @@ export default function AppDrawer() {
 
   const DrawerList = (
     <Box sx={{ width: 300 }} role="presentation" onClick={toggleDrawer(false)}>
-        <Box sx={{ height: 200, background: grey[500]}}></Box>
+        <Box sx={{ 
+          height: 200, 
+          padding: 2,
+          display: "flex",
+          alignItems: "flex-end",
+          }}>
+          {auth && (
+            <>
+              <Avatar 
+                sx={{
+                  width: 128,
+                  height: 128,
+                  background: green[500],
+                }}
+              >
+                {auth.name[0]}
+              </Avatar>
+            </>
+          )}
+        </Box>
       <List>
           <ListItem disablePadding>
             <ListItemButton onClick={() => navigate("/")}>
@@ -52,7 +72,10 @@ export default function AppDrawer() {
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding>
-          <ListItemButton onClick={() => setAuth(false)}>
+          <ListItemButton onClick={() => {
+            setAuth(false);
+            localStorage.removeItem("token");
+          }}>
             <ListItemIcon>
               <LogoutIcon />
             </ListItemIcon>

@@ -11,19 +11,29 @@ datasource db {
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  name  String
-  username String @unique
-  bio String?
+  id       Int      @id @default(autoincrement())
+  name     String
+  username String   @unique
+  bio      String?
   password String
-  posts Post[]
-  created DateTime @default(now())
+  posts    Post[]
+  likes    Like[]
+  created  DateTime @default(now())
 }
 
 model Post {
-  id        Int     @id @default(autoincrement())
-  content   String
-  user    User    @relation(fields: [userId], references: [id])
+  id      Int      @id @default(autoincrement())
+  content String
+  user    User     @relation(fields: [userId], references: [id])
   userId  Int
+  likes   Like[]
   created DateTime @default(now())
+}
+
+model Like {
+  id     Int  @id @default(autoincrement())
+  post   Post @relation(fields: [postId], references: [id])
+  postId Int
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
 }
