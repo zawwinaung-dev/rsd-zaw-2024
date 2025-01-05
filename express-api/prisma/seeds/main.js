@@ -1,7 +1,7 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-const { faker } = require("@faker-js/faker");
+const { faker, fa } = require("@faker-js/faker");
 const bcrypt = require("bcrypt");
 
 async function main() {
@@ -34,6 +34,21 @@ async function main() {
 
     console.log("post seeding done.");
 
+    console.log("comment seeding started...");
+    for (let i = 0; i < 40; i++) {
+        await prisma.comment.create({
+            data: {
+                content: faker.lorem.sentence(),
+                postId: faker.number.int({ min: 1, max: 20 }),
+                userId: faker.number.int({ min:1, max: 5 }),
+            }
+        });
+    }
+
+    console.log("comment seeding done.");
+
 }
 
 main();
+
+//npx prisma migrate reset
