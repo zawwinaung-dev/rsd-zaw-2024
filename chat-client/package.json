@@ -1,5 +1,5 @@
 {
-  "name": "react-app",
+  "name": "chat-client",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,17 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@emotion/react": "^11.13.3",
-    "@emotion/styled": "^11.13.0",
-    "@fontsource/roboto": "^5.1.0",
-    "@mui/icons-material": "^6.1.7",
-    "@mui/material": "^6.1.7",
-    "date-fns": "^4.1.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-hook-form": "^7.53.2",
-    "react-query": "^3.39.3",
-    "react-router": "^7.0.1"
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",

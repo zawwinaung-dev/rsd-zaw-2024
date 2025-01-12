@@ -1,63 +1,48 @@
-import { Typography } from '@mui/material';
-import Item from "../components/Item";
-import { useQuery, useMutation, useQueryClient } from "react-query";
+import { useState } from "react";
+import { Box, Tabs, Tab } from "@mui/material";
+import { useNavigate, useSearchParams } from "react-router";
+
+import Form from "../components/Form";
+import Posts from "../components/Posts";
 import { useApp } from "../AppProvider";
-import Form from '../components/Form';
-
-const api = "http://localhost:8080/posts";
-
-async function fetchPosts() {
-    const res = await fetch(api);
-    
-    return res.json();
-}
-
-async function deletePost(id) {
-    const token = localStorage.getItem("token");
-    const res = await fetch(`${api}/${id}`, {
-        method: 'Delete',
-        headers: {
-            Authorization: `Bearer ${token}`,
-        }
-    });
-
-    return res.json();
-}
-
-
 
 export default function Home() {
-    const { data, error, isLoading } = useQuery("posts", fetchPosts);
-    const queryClient = useQueryClient();
     const { auth, showForm } = useApp();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const tab = searchParams.get("tab") || "latest";
+    const navigate = useNavigate();
 
-    const remove = useMutation(deletePost, {
-        onMutate: id => {
-            queryClient.setQueryData("posts", old => {
-                return old.filter(post => {
-                    return post.id != id;
-                });
-            });
-        },
-        // onSuccess: async () => {
+    const handleTabChange = (event, newValue) => {
+        setSearchParams({ tab: newValue });
+    };
+
+    // onSuccess: async () => {
         //     await queryClient.cancelQueries();
         //     await queryClient.invalidateQueries("posts");
         // }
-    })
-
-    if(isLoading) {
-        return <Typography>Loading...</Typography>
-    }
 
     return (
         <>
-            { auth && showForm && <Form /> }
+            <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
+                <Tabs 
+                    value={tab} 
+                    onChange={handleTabChange}
+                    variant="fullWidth"
+                >
+                    <Tab 
+                        label="Latest" 
+                        value="latest"
+                    />
+                    <Tab 
+                        label="Following" 
+                        value="following"
+                        disabled={!auth}
+                    />
+                </Tabs>
+            </Box>
 
-            {data.map(post => {
-                return (
-                    <Item key={post.id} post={post} remove={remove.mutate} />
-                )
-            })}
+            {auth && showForm && <Form />}
+            <Posts type={tab} />
         </>
-    )
+    );
 }

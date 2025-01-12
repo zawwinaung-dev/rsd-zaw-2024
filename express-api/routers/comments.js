@@ -4,57 +4,79 @@ const router = express.Router();
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-const { auth, isOwner } = require("../middlewares/auth");
+const { auth } = require("../middlewares/auth");
+const { isCommentOwner } = require("../middlewares/ownership");
+const { wsService } = require("../services/websocket");
 
-// Create a new comment
-router.post('/comments', auth, async (req, res) => {
-    const { content, postId } = req.body;
-    const user = res.locals.user;
+router.post("/posts/:id/comments", auth, async (req, res) => {
+	const postId = req.params.id;
+    const userId = req.user.id;
+	const { content } = req.body;
 
-    try {
-        const comment = await prisma.comment.create({
-            data: {
-                content,
-                postId: parseInt(postId),
-                userId: user.id
-            },
-            include: {
-                user: true
-            }
+	try {
+        // Get post to check owner
+        const post = await prisma.post.findUnique({
+            where: { id: parseInt(postId) },
+            select: { userId: true }
         });
-        res.json(comment);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+
+        if (!post) {
+            return res.status(404).json({ error: "Post not found" });
+        }
+
+		const comment = await prisma.comment.create({
+			data: {
+				content,
+				postId: parseInt(postId),
+				userId: userId,
+			},
+			include: {
+				user: true,
+			},
+		});
+
+        // Create notification if the comment is not from post owner
+        if (post.userId !== userId) {
+            const notification = await prisma.notification.create({
+                data: {
+                    type: "COMMENT",
+                    userId: post.userId,
+                    actorId: userId,
+                    postId: parseInt(postId),
+                    read: false,
+                },
+                include: {
+                    actor: true,
+                    post: true
+                }
+            });
+
+            // Send real-time notification
+            wsService.sendToUser(post.userId, {
+                type: 'notification',
+                data: notification
+            });
+        }
+
+		res.json(comment);
+	} catch (err) {
+		res.status(500).json({ error: err.message });
+	}
 });
 
-// Delete a comment
-router.delete('/comments/:id', auth, async (req, res) => {
-    const commentId = parseInt(req.params.id);
-    
-    try {
-        // Check if comment exists and user is the owner
-        const comment = await prisma.comment.findUnique({
-            where: { id: commentId }
-        });
+router.delete("/comments/:id", auth, isCommentOwner, async (req, res) => {
+	const commentId = parseInt(req.params.id);
 
-        if (!comment) {
-            return res.status(404).json({ error: "Comment not found" });
-        }
+	try {
+		// Delete the comment
+		await prisma.comment.delete({
+			where: { id: commentId },
+		});
 
-        if (comment.userId !== req.user.id) {
-            return res.status(403).json({ error: "Not authorized" });
-        }
-
-        // Delete the comment
-        await prisma.comment.delete({
-            where: { id: commentId }
-        });
-
-        res.json({ message: "Comment deleted successfully" });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+		res.json({ message: "Comment deleted successfully" });
+	} catch (err) {
+		res.status(500).json({ error: err.message });
+	}
 });
 
 module.exports = { commentsRouter: router };

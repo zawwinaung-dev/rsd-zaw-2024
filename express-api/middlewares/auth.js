@@ -10,39 +10,36 @@ const prisma = new PrismaClient();
  * @param {express.Response} res
  * @param {express.NextFunction} next
  */
-
-function auth(req, res, next) {
-    const authorization = req.headers.authorization;
-    const token = authorization.split(" ")[1];
-    if(!token) {
-        return res.status(401).json({ msg: "token is required"});
-    }
-
+async function auth(req, res, next) {
     try {
-        const user = jwt.verify(token, process.env.JWT_SECRET);
-        res.locals.user = user;
-        next();
-    } catch (error) {
-        res.status(401).json({ msg: "invalid token"});
-    }
-}
-
-function isOwner(type) {
-    return async (req, res, next) => {
-        if(type === "post") {
-            const id = req.params.id;
-            const post = await prisma.post.findUnique({
-                where: { id: Number(id)},
-            });
-
-            if(res.locals.user.id === post.userId) {
-                return next();
-            }
+        // Get token from header
+        const authHeader = req.header('Authorization');
+        if (!authHeader) {
+            return res.status(401).json({ msg: "no token found" });
         }
 
-        res.status(401).json({ msg: "forbidden" });
-    }
+        // Verify token
+        const token = authHeader.replace('Bearer ', '');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+        // Get user from database
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.id }
+        });
+
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        // Set user data on request object
+        req.user = user;
+        next();
+    } catch (error) {
+        console.error('Auth error:', error);
+        res.status(401).json({ msg: "invalid token" });
+    }
 }
 
-module.exports = { auth, isOwner };
+module.exports = {
+    auth
+};

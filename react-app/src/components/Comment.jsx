@@ -53,7 +53,7 @@ export default function Comment({ comment, remove }) {
 						<IconButton
 							size="small"
 							onClick={() => remove(comment.id)}>
-							<DeleteIcon sx={{ fontSize: 18 }} />
+							<DeleteIcon sx={{ fontSize: 18, color: "grey" }} />
 						</IconButton>
 					)}
 				</Box>

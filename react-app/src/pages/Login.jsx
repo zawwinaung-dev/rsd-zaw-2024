@@ -1,88 +1,96 @@
-import {
-    Box, Typography, OutlinedInput, Button, Alert,
-} from "@mui/material"
-import { useApp } from "../AppProvider"
-import { useNavigate } from "react-router"
-import { useForm } from "react-hook-form"
-import { useMutation } from "react-query"
+import { Box, Typography, OutlinedInput, Button, Alert } from "@mui/material";
+import { useApp } from "../AppProvider";
+import { useNavigate } from "react-router";
+import { useForm } from "react-hook-form";
+import { useMutation } from "react-query";
 
 async function postLogin(data) {
-    const res = await fetch("http://localhost:8080/login", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: {
-            "Content-Type": "application/json",
-        }
-    });
+	const res = await fetch("http://localhost:8080/login", {
+		method: "POST",
+		body: JSON.stringify(data),
+		headers: {
+			"Content-Type": "application/json",
+		},
+	});
 
-    if (!res.ok) {
-        throw new Error("Network response was not ok");
-    }
+	if (!res.ok) {
+		const error = await res.json();
+		throw new Error(error.msg || "Login failed");
+	}
 
-    return res.json(); 
+	return res.json();
 }
 
 export default function Login() {
-    const { setAuth } = useApp();
-    const navigate = useNavigate();
+	const { setAuth } = useApp();
+	const navigate = useNavigate();
 
-    const login = useMutation(postLogin, {
-        onSuccess: data => {
-            setAuth(data.user);
-            localStorage.setItem("token", data.token);
-            navigate("/");
-        },
-    })
+	const {
+		register,
+		handleSubmit,
+		formState: { errors },
+	} = useForm();
 
-    const {
-        register,
-        handleSubmit,
-        formState: { errors },
-    } = useForm();
+	const login = useMutation(postLogin, {
+		onSuccess: ({ user, token }) => {
+			// First store the token
+			localStorage.setItem("token", token);
+			// Then set the auth state
+			setAuth(user);
+			// Finally navigate
+			navigate("/");
+		},
+		onError: (error) => {
+			console.error("Login failed:", error);
+		}
+	});
 
-    const submitLogin = data => {
-        // setAuth(true);
-        // navigate("/");
-        login.mutate(data);
-    }
-    
-    return (
-        <Box>
-            <Typography variant="h3">Login</Typography>
+	const submitLogin = data => {
+		login.mutate(data);
+	};
 
-            { login.isError && 
-                <Alert severity="warning" sx={{ mt: 2}}>
-                    Invalid username or password
-                </Alert>
-            }
+	return (
+		<Box>
+			<Typography variant="h3">Login</Typography>
 
-            <form onSubmit={handleSubmit(submitLogin)}>
-                <OutlinedInput
-                    {...register("username", { required: true })}
-                    fullWidth
-                    sx={{ mt: 2}}
-                    placeholder="username"
-                />
-                { errors.username && (
-                    <Typography color="error">username is required</Typography>
-                )}
-                <OutlinedInput
-                    {...register("password", { required: true })}
-                    fullWidth
-                    sx={{ mt: 2}}
-                    placeholder="password"
-                />
-                { errors.password && (
-                    <Typography color="error">password is required</Typography>
-                )}
-                <Button 
-                    fullWidth
-                    type="submit"
-                    sx={{ mt: 2}}
-                    variant="contained">
-                    Login
-                </Button>
-            </form>
-        </Box>
-    )
+			{login.isError && (
+				<Alert
+					severity="warning"
+					sx={{ mt: 2 }}>
+					Invalid username or password
+				</Alert>
+			)}
+
+			<form onSubmit={handleSubmit(submitLogin)}>
+				<OutlinedInput
+					{...register("username", { required: true })}
+					fullWidth
+					placeholder="username"
+					sx={{ mt: 2 }}
+				/>
+				{errors.username && (
+					<Typography color="error">username is required</Typography>
+				)}
+
+				<OutlinedInput
+					{...register("password", { required: true })}
+					fullWidth
+					type="password"
+					placeholder="password"
+					sx={{ mt: 2 }}
+				/>
+				{errors.password && (
+					<Typography color="error">password is required</Typography>
+				)}
+
+				<Button
+					sx={{ mt: 2 }}
+					type="submit"
+					fullWidth
+					variant="contained">
+					Login
+				</Button>
+			</form>
+		</Box>
+	);
 }

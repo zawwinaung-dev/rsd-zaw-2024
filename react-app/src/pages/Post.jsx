@@ -1,6 +1,6 @@
 import { Container, Box, Typography, CircularProgress, Divider } from "@mui/material";
 import { useParams } from "react-router";
-import { useQuery } from "react-query";
+import { useQuery, useMutation, useQueryClient } from "react-query";
 
 import Item from "../components/Item";
 import Comment from "../components/Comment";
@@ -15,14 +15,36 @@ const fetchPost = async (id) => {
     return res.json();
 };
 
+const deleteComment = async (commentId) => {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(`${API}/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: {
+            Authorization: `Bearer ${token}`,
+        }
+    });
+
+    if (!res.ok) throw new Error("Failed to delete comment");
+    
+    return res.json();
+};
+
 export default function Post() {
     const { id } = useParams();
     const { auth } = useApp();
+    const queryClient = useQueryClient();
     
     const { data: post, isLoading, error } = useQuery(
         ["post", id],
         () => fetchPost(id)
     );
+
+    const { mutate: removeComment } = useMutation(deleteComment, {
+        onSuccess: () => {
+            queryClient.invalidateQueries(["post", id]);
+        },
+    });
 
     if (isLoading) {
         return (
@@ -44,29 +66,23 @@ export default function Post() {
 
     return (
         <Container maxWidth="sm" sx={{ py: 4 }}>
-            <Item post={post} />
+            <Item post={post} navigateOnDelete={true} />
             
             <Box sx={{ mt: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                    Comments ({post.comments?.length || 0})
-                </Typography>
-                <Divider />
-                
                 <Box sx={{ mt: 2 }}>
                     {post.comments?.map(comment => (
                         <Comment 
                             key={comment.id} 
                             comment={comment}
                             remove={() => {
-                                // TODO: Implement comment deletion
-                                console.log("Delete comment:", comment.id);
+                                removeComment(comment.id);
                             }}
                         />
                     ))}
                 </Box>
 
                 {auth ? (
-                    <CommentForm postId={post.id} />
+                    <CommentForm postId={id} />
                 ) : (
                     <Typography 
                         variant="body2" 
