@@ -203,12 +203,14 @@ router.delete('/posts/:id/like', auth, async (req, res) => {
 });
 
 router.get('/posts/:id/likes', async (req, res) => {
-    const { id } = req.params;
+    const postId = Number(req.params.id);
 
     try {
-        const likedUsers = await prisma.like.findMany({
-            where: { postId: Number(id) },
-            include: {
+        const likes = await prisma.like.findMany({
+            where: {
+                postId
+            },
+            select: {
                 user: {
                     select: {
                         id: true,
@@ -222,7 +224,7 @@ router.get('/posts/:id/likes', async (req, res) => {
         });
 
         // Extract just the user objects from the likes
-        const users = likedUsers.map(like => like.user);
+        const users = likes.map(like => like.user);
         res.json(users);
     } catch(err) {
         res.status(500).json({ msg: err.message });

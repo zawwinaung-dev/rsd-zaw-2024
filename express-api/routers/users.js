@@ -133,48 +133,50 @@ router.get("/verify", auth, async (req, res) => {
 router.get("/users/:id", optionalAuth, async (req, res) => {
     const userId = parseInt(req.params.id);
     try {
-        const user = await prisma.user.findUnique({
-            where: { id: userId },
-            include: {
-                followers: true,
-                follows: true,
-                posts: {
-                    orderBy: { id: 'desc' },
-                    include: {
-                        user: true,
-                        likes: true,
-                        comments: {
-                            include: { user: true }
+        const [user, counts] = await Promise.all([
+            prisma.user.findUnique({
+                where: { id: userId },
+                include: {
+                    followers: req.user ? {
+                        where: {
+                            followerId: req.user.id
+                        }
+                    } : false,
+                    posts: {
+                        orderBy: { id: 'desc' },
+                        include: {
+                            user: true,
+                            likes: true,
+                            comments: {
+                                include: { user: true }
+                            }
                         }
                     }
                 }
-            }
-        });
+            }),
+            prisma.user.findUnique({
+                where: { id: userId },
+                include: {
+                    _count: {
+                        select: {
+                            followers: true,
+                            follows: true
+                        }
+                    }
+                }
+            })
+        ]);
 
         if (!user) {
             return res.status(404).json({ error: "User not found" });
         }
 
-        // Check if the current user is following this user (if authenticated)
-        let isFollowing = false;
-        if (req.user) {
-            const followRecord = await prisma.follow.findFirst({
-                where: {
-                    followerId: req.user.id,
-                    followingId: userId
-                }
-            });
-            isFollowing = !!followRecord;
-        }
-
-        const { password, followers, follows, ...userWithoutPassword } = user;
+        const { password, followers, ...userWithoutPassword } = user;
         res.json({
             ...userWithoutPassword,
-            isFollowing,
-            followerCount: followers.length,
-            followingCount: follows.length,
-            followers,
-            follows
+            isFollowing: req.user ? followers?.length > 0 : false,
+            followerCount: counts._count.followers,
+            followingCount: counts._count.follows
         });
     } catch (error) {
         console.error('Error fetching user:', error);
@@ -182,7 +184,7 @@ router.get("/users/:id", optionalAuth, async (req, res) => {
     }
 });
 
-router.get("/search", async (req, res) => {
+router.get("/search", optionalAuth, async (req, res) => {
     const { q } = req.query;
     if (!q) {
         return res.status(400).json({ error: "Search query is required" });
@@ -202,18 +204,24 @@ router.get("/search", async (req, res) => {
                         followers: true,
                         follows: true
                     }
-                }
+                },
+                followers: req.user ? {
+                    where: {
+                        followerId: req.user.id
+                    }
+                } : false
             },
             take: 10
         });
 
         // Remove sensitive data and add counts
         const sanitizedUsers = users.map(user => {
-            const { password, _count, ...rest } = user;
+            const { password, _count, followers, ...rest } = user;
             return {
                 ...rest,
                 followersCount: _count.followers,
-                followingCount: _count.follows
+                followingCount: _count.follows,
+                isFollowing: req.user ? followers?.length > 0 : false
             };
         });
 
@@ -339,7 +347,34 @@ router.post("/users/:id/follow", auth, async (req, res) => {
             data: notification
         });
 
-        res.json({ success: true });
+        // Get updated user data
+        const user = await prisma.user.findUnique({
+            where: { id: followingId },
+            include: {
+                followers: true,
+                follows: true,
+                posts: {
+                    orderBy: { id: 'desc' },
+                    include: {
+                        user: true,
+                        likes: true,
+                        comments: {
+                            include: { user: true }
+                        }
+                    }
+                }
+            }
+        });
+
+        const { password, followers, follows, ...userWithoutPassword } = user;
+        res.json({
+            ...userWithoutPassword,
+            isFollowing: true,
+            followerCount: followers.length,
+            followingCount: follows.length,
+            followers,
+            follows
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Server error' });
@@ -376,7 +411,34 @@ router.delete("/users/:id/follow", auth, async (req, res) => {
             }
         });
 
-        res.json({ success: true });
+        // Get updated user data
+        const user = await prisma.user.findUnique({
+            where: { id: followingId },
+            include: {
+                followers: true,
+                follows: true,
+                posts: {
+                    orderBy: { id: 'desc' },
+                    include: {
+                        user: true,
+                        likes: true,
+                        comments: {
+                            include: { user: true }
+                        }
+                    }
+                }
+            }
+        });
+
+        const { password, followers, follows, ...userWithoutPassword } = user;
+        res.json({
+            ...userWithoutPassword,
+            isFollowing: false,
+            followerCount: followers.length,
+            followingCount: follows.length,
+            followers,
+            follows
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Server error' });

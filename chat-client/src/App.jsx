@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 
 export default function App() {
 	const [messages, setMessages] = useState([]);
+	const [name, setName] = useState("Anon");
+	const [isEditingName, setIsEditingName] = useState(false);
 
 	const nameRef = useRef();
 	const msgRef = useRef();
@@ -34,14 +36,39 @@ export default function App() {
 	}, []);
 
 	return (
-		<div>
-			<h1>Chat</h1>
+		<div className="max-w-2xl mx-auto p-4">
+			<h1 className="text-3xl font-bold mb-6 text-center">Chat</h1>
+			<div className="mb-1">
+				<span className="text-sm text-gray-600">Chatting as: </span>
+				{isEditingName ? (
+					<input
+						type="text"
+						value={name}
+						onChange={(e) => setName(e.target.value)}
+						onBlur={() => setIsEditingName(false)}
+						onKeyDown={(e) => {
+							if (e.key === 'Enter') {
+								setIsEditingName(false);
+							}
+						}}
+						className="inline-block px-2 py-1 text-blue-600 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 rounded"
+						autoFocus
+					/>
+				) : (
+					<button
+						onClick={() => setIsEditingName(true)}
+						className="inline-block px-2 py-1 text-blue-600 font-semibold hover:bg-blue-50 rounded"
+					>
+						{name}
+					</button>
+				)}
+			</div>
 			<form
+				className="mb-6 space-y-2"
 				onSubmit={e => {
 					e.preventDefault();
-					const name = nameRef.current.value;
 					const msg = msgRef.current.value;
-					if (!name || !msg) return false;
+					if (!msg) return false;
 
 					fetch("http://localhost:8888/chat", {
 						method: "POST",
@@ -56,17 +83,28 @@ export default function App() {
 					msgRef.current.value = "";
 					msgRef.current.focus();
 				}}>
-				<input type="text" ref={nameRef} />
-				<br />
-				<input type="text" ref={msgRef} />
-				<button type="submit">Add</button>
+				<input 
+					type="text" 
+					ref={msgRef}
+					placeholder="Type your message"
+					className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+				/>
+				<button 
+					type="submit"
+					className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
+				>
+					Send
+				</button>
 			</form>
-			<ul>
+			<ul className="space-y-2">
 				{messages.map(message => {
 					return (
-						<li key={message.id}>
-							<b>{message.name}:</b>
-							{message.msg}
+						<li 
+							key={message.id}
+							className="p-3 bg-gray-100 rounded-lg"
+						>
+							<span className="font-bold text-blue-600">{message.name}:</span>
+							<span className="ml-2">{message.msg}</span>
 						</li>
 					);
 				})}
