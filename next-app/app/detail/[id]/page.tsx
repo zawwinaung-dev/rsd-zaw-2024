@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type MovieType = {
 	id: string;
 	title: string;
@@ -65,11 +67,19 @@ export default async function Detail({
                 {casts.map(cast => {
                     return (
                         <div key={cast.id} className="w-[128px] text-center">
-                            <img 
+                            { cast.profile_path ? (
+                                <img 
                                 src={profile + cast.profile_path}
                                 alt={cast.name}
                             />
-                            <b>{cast.name}</b>
+                            ) : (
+                                <div className="w-[128px] h-[192px] bg-gray-300 flex flex-col place-content-center">
+                                    <span className="text-5xl">?</span>
+                                </div>
+                            )}
+                            <b>
+                                <Link href={`/person/${cast.id}`}>{cast.name}</Link>
+                            </b>
                             <div className="text-gray-600 text-sm">{cast.character}</div>
                         </div>
                     )

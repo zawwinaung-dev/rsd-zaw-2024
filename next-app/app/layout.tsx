@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-import { LayersIcon, MagnifyingGlassIcon } from "@radix-ui/react-icons";
+import { LayersIcon, MagnifyingGlassIcon, SunIcon, MoonIcon } from "@radix-ui/react-icons";
 import Sidebar from "@/components/sidebar";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { redirect } from "next/navigation";
+import ThemeProvider from "./provider";
+import ThemeSwitch from "@/components/ThemeSwitch";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,6 +31,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   async function search(formData: FormData) {
     "use server";
     redirect(`/search?q=${formData.get("q")}`);
@@ -39,24 +42,28 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <header className="p-4 border-b flex justify-between">
-          <h1 className="text-xl font-bold flex items-center gap-2">
-            <LayersIcon width={24} height={24} />
-            Next App
-          </h1>
-
-          <form className="flex gap-1" action={search}>
-            <Input placeholder="Search Movie" name="q" />
-            <Button type="submit">
-              <MagnifyingGlassIcon />
-            </Button>
-          </form>
-        </header>
-
-        <div className="flex p-4">
-          <Sidebar />
-          <main className="pl-4 flex-grow">{children}</main>
-        </div>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <header className="p-4 border-b flex justify-between">
+            <h1 className="text-xl font-bold flex items-center gap-2">
+              <LayersIcon width={24} height={24} />
+              Next App
+            </h1>
+            <div className="flex justify-between gap-2">
+              <form className="flex gap-1" action={search}>
+                <Input placeholder="Search Movie" name="q" />
+                <Button type="submit">
+                  <MagnifyingGlassIcon />
+                </Button>
+              </form>
+              <ThemeSwitch />
+            </div>
+          </header>
+          
+            <div className="flex p-4">
+              <Sidebar />
+              <main className="pl-4 flex-grow">{children}</main>
+            </div>
+        </ThemeProvider>
       </body>
     </html>
   );
