@@ -1,33 +1,65 @@
-// /components/ThemeSwitch/index.tsx
+// // /components/ThemeSwitch/index.tsx
 
-"use client"
+// "use client"
 
-import { SunIcon, MoonIcon } from '@radix-ui/react-icons';
-import { useTheme } from 'next-themes';
-import { Button } from '../ui/button';
+// import { SunIcon, MoonIcon } from '@radix-ui/react-icons';
+// import { useTheme } from 'next-themes';
+// import { Button } from '../ui/button';
 
 
+
+// const ThemeSwitch: React.FC = () => {
+
+//     const { theme, setTheme } = useTheme();
+
+//     const toggleTheme = () => {
+//         setTheme(theme === "light" ? "dark" : "light");
+//     };
+
+//     const isActive = theme === "light";
+
+//     // const switchClasses = `flex items-center justify-center w-6 h-6 text-dark bg-white rounded-full transform ${
+
+//     // isActive ? 'translate-x-0' : 'translate-x-6'
+
+//     // } transition-transform duration-500 ease-in-out`;
+
+// return (
+
+// <Button onClick={toggleTheme}>{isActive ? <MoonIcon /> : <SunIcon />}</Button>
+
+// )};
+
+// export default ThemeSwitch;
+
+"use client";
+
+import { SunIcon, MoonIcon } from "@radix-ui/react-icons";
+import { useTheme } from "next-themes";
+import { Button } from "../ui/button";
+import { useEffect, useState } from "react";
 
 const ThemeSwitch: React.FC = () => {
+  const { theme, setTheme, resolvedTheme } = useTheme(); // resolvedTheme handles system theme
+  const [mounted, setMounted] = useState(false);
 
-    const { theme, setTheme } = useTheme();
+  useEffect(() => {
+    setMounted(true); // Ensures component renders only on the client
+  }, []);
 
-    const toggleTheme = () => {
-        setTheme(theme === "light" ? "dark" : "light");
-    };
+  if (!mounted) return null; // Avoid rendering during SSR
 
-    const isActive = theme === "light";
+  const toggleTheme = () => {
+    setTheme(resolvedTheme === "light" ? "dark" : "light");
+  };
 
-    // const switchClasses = `flex items-center justify-center w-6 h-6 text-dark bg-white rounded-full transform ${
+  const isLightTheme = resolvedTheme === "light";
 
-    // isActive ? 'translate-x-0' : 'translate-x-6'
-
-    // } transition-transform duration-500 ease-in-out`;
-
-return (
-
-<Button onClick={toggleTheme}>{isActive ? <MoonIcon /> : <SunIcon />}</Button>
-
-)};
+  return (
+    <Button onClick={toggleTheme}>
+      {isLightTheme ? <MoonIcon /> : <SunIcon />}
+    </Button>
+  );
+};
 
 export default ThemeSwitch;

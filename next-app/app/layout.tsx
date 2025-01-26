@@ -8,7 +8,8 @@ import Sidebar from "@/components/sidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { redirect } from "next/navigation";
-import ThemeProvider from "./provider";
+// import ThemeProvider from "./provider";
+import { ThemeProvider } from "./provider";
 import ThemeSwitch from "@/components/ThemeSwitch";
 
 const geistSans = Geist({
@@ -42,7 +43,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <header className="p-4 border-b flex justify-between">
             <h1 className="text-xl font-bold flex items-center gap-2">
               <LayersIcon width={24} height={24} />
